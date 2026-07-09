@@ -1,11 +1,24 @@
-import { Image, Pressable, StyleSheet, Text, View, ScrollView, ActivityIndicator } from "react-native";
-import React, { useState } from "react";
-import { fetchUserData } from '../userData';
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  ActivityIndicator,
+  SafeAreaView,
+} from "react-native";
+import React, { useState, useCallback } from "react";
+import { fetchUserData } from "../userData";
 import * as ImagePicker from "expo-image-picker";
-import { firebase_auth, firebase_db, firebase_storage } from "../firebaseConfig";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  firebase_auth,
+  firebase_db,
+  firebase_storage,
+} from "../firebaseConfig";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { updateProfile } from "firebase/auth";
-import { update } from "firebase/database";
+import { ref as dbRef, update } from "firebase/database";
 import { useFocusEffect } from "@react-navigation/native";
 
 export default function Profile({ navigation }) {
@@ -14,7 +27,7 @@ export default function Profile({ navigation }) {
   const [uploading, setUploading] = useState(false);
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       const refreshUserData = async () => {
         try {
           const data = await fetchUserData();
@@ -27,10 +40,6 @@ export default function Profile({ navigation }) {
       };
 
       refreshUserData();
-
-      return () => {
-        // Cleanup function
-      };
     }, [])
   );
 
@@ -43,15 +52,11 @@ export default function Profile({ navigation }) {
         quality: 1,
       });
 
-      console.log('ImagePicker result:', result); // Log the result to check its structure
-
       if (!result.canceled && result.assets && result.assets.length > 0) {
         await uploadImage(result.assets[0].uri);
-      } else {
-        console.error('ImagePicker result is not valid:', result);
       }
     } catch (error) {
-      console.error('Error picking image:', error);
+      console.error("Error picking image:", error);
     }
   };
 
@@ -61,20 +66,20 @@ export default function Profile({ navigation }) {
       const userId = firebase_auth.currentUser.uid;
       const response = await fetch(uri);
       const blob = await response.blob();
-      const storageRef = ref(firebase_storage, `profile_pictures/${userId}`);
-      const snapshot = await uploadBytes(storageRef, blob);
+      const sRef = storageRef(firebase_storage, `profile_pictures/${userId}`);
+      const snapshot = await uploadBytes(sRef, blob);
 
       const downloadURL = await getDownloadURL(snapshot.ref);
       await updateProfile(firebase_auth.currentUser, {
         photoURL: downloadURL,
       });
 
-      const userRef = ref(firebase_db, `users/${userId}`);
+      const userRef = dbRef(firebase_db, `users/${userId}`);
       await update(userRef, { photoURL: downloadURL });
 
       setUserData({ ...userData, photoURL: downloadURL });
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error("Error uploading image:", error);
     } finally {
       setUploading(false);
     }
@@ -83,188 +88,222 @@ export default function Profile({ navigation }) {
   const handleSignOut = async () => {
     try {
       await firebase_auth.signOut();
-      navigation.navigate("Login"); // Navigate to the login screen
+      navigation.navigate("Login");
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   };
 
   if (loading) {
-    return <Text>Loading user data...</Text>;
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#0EA5E9" />
+      </View>
+    );
   }
 
   return (
-    <View style={styles.wrapper}>
-      <View style={styles.bellandback}>
-        <Pressable>
-          <Image
-            source={require("../assets/static/20240228_031624_0025.png")}
-            style={styles.btnimg}
-          />
-        </Pressable>
-        <Pressable>
-          <Image
-            source={require("../assets/static/20240228_031624_0024.png")}
-            style={styles.btnimg}
-          />
-        </Pressable>
-      </View>
-      <ScrollView>
-        <View style={styles.profbox}>
-          <Text style={styles.headings}>Profile</Text>
-          <Pressable onPress={pickImage}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Profile</Text>
+        </View>
+
+        <View style={styles.profileCard}>
+          <Pressable onPress={pickImage} style={styles.avatarContainer}>
             {uploading ? (
-              <ActivityIndicator size="large" color="#0000ff" />
+              <ActivityIndicator color="#0EA5E9" />
             ) : (
               <Image
-                source={userData.photoURL ? { uri: userData.photoURL } : require("../assets/static/20240221_000353_0007.png")}
-                style={styles.profpic}
+                source={
+                  userData.photoURL
+                    ? { uri: userData.photoURL }
+                    : require("../assets/static/profile.png")
+                }
+                style={styles.avatar}
               />
             )}
+            <View style={styles.editBadge}>
+              <Text style={styles.editBadgeText}>✎</Text>
+            </View>
           </Pressable>
-          <Text>{userData.name}</Text>
+          <Text style={styles.userName}>{userData.name}</Text>
+          <Text style={styles.userEmail}>{userData.email}</Text>
         </View>
-        <View style={styles.box}>
-          <Text style={styles.headings}>Personal Information</Text>
-          <View style={styles.infobox}>
-            <Text style={styles.infohead}>Name </Text>
-            <Text style={styles.info}>{userData.name}</Text>
-            <Text style={styles.infohead}>E-Mail</Text>
-            <Text style={styles.info}>{userData.email}</Text>
-            <Text style={styles.infohead}>Phone</Text>
-            <Text style={styles.info}>{userData.mobile}</Text>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account Details</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Phone</Text>
+            <Text style={styles.infoValue}>{userData.mobile || "Not set"}</Text>
           </View>
-          <Pressable style={styles.rightbox} onPress={() => navigation.navigate("EditProfile")}>
-            <Text style={styles.editprofbtn}>Edit Profile</Text>
-            <Image
-              source={require("../assets/static/20240228_031624_0026.png")}
-              style={styles.followpic}
-            />
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Settings</Text>
+          <Pressable
+            style={styles.menuItem}
+            onPress={() => navigation.navigate("EditProfile")}
+          >
+            <Text style={styles.menuItemText}>Edit Profile</Text>
+            <Text style={styles.menuItemArrow}>chevron-right</Text>
           </Pressable>
-          <Text style={styles.headings}>Security</Text>
-          <View style={styles.security}>
-            <Pressable style={styles.linkbox} onPress={() => navigation.navigate("ChangePassword")}>
-              <Text>Change Password</Text>
-              <Image
-                source={require("../assets/static/20240228_031624_0026.png")}
-                style={styles.followpic}
-              />
-            </Pressable>
-          </View>
-          <Pressable style={styles.linkbox} onPress={() => console.log('Navigate to About Us')}>
-            <Text style={styles.headings}>About Us</Text>
-            <Image
-              source={require("../assets/static/20240228_031624_0028.png")}
-              style={styles.followpic}
-            />
-          </Pressable>
-          <Pressable style={styles.rightbox} onPress={handleSignOut}>
-            <Text style={styles.signoutbtn}>Sign Out</Text>
+          <Pressable
+            style={styles.menuItem}
+            onPress={() => navigation.navigate("ChangePassword")}
+          >
+            <Text style={styles.menuItemText}>Change Password</Text>
+            <Text style={styles.menuItemArrow}>chevron-right</Text>
           </Pressable>
         </View>
+
+        <View style={styles.section}>
+          <Pressable
+            style={styles.menuItem}
+            onPress={() => console.log("About")}
+          >
+            <Text style={styles.menuItemText}>About DermVision</Text>
+            <Text style={styles.menuItemArrow}>chevron-right</Text>
+          </Pressable>
+        </View>
+
+        <Pressable style={styles.signOutBtn} onPress={handleSignOut}>
+          <Text style={styles.signOutBtnText}>Sign Out</Text>
+        </Pressable>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    backgroundColor: "#00e9f1",
-    width: "100%",
-    height: "100%",
+  container: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
   },
-  headings: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#221410",
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  bellandback: {
-    marginTop: 40,
-    display: "flex",
+  scrollContent: {
+    padding: 24,
+  },
+  header: {
+    marginBottom: 32,
+    marginTop: 20,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "800",
+    color: "#1E293B",
+  },
+  profileCard: {
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+    marginBottom: 32,
+  },
+  avatarContainer: {
+    position: "relative",
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#F1F5F9",
+  },
+  editBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: "#0EA5E9",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#FFFFFF",
+  },
+  editBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+  },
+  userName: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#1E293B",
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 14,
+    color: "#64748B",
+  },
+  section: {
+    marginBottom: 24,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#94A3B8",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 16,
+    marginLeft: 4,
+  },
+  infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    paddingVertical: 8,
   },
-  btnimg: {
-    height: 60,
-    width: 60,
+  infoLabel: {
+    fontSize: 16,
+    color: "#64748B",
   },
-  profbox: {
-    display: "flex",
-    alignItems: "center",
+  infoValue: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1E293B",
   },
-  profpic: {
-    height: 80,
-    width: 80,
-    borderRadius: 40,
-  },
-  followpic: {
-    height: 30,
-    width: 30,
-  },
-  followpiccontact: {
-    height: 60,
-    width: 50,
-  },
-  linkbox: {
-    display: "flex",
+  menuItem: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    margin: 10,
-    marginLeft: 0,
+    paddingVertical: 12,
   },
-  rightbox: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "flex-end",
+  menuItemText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#1E293B",
+  },
+  menuItemArrow: {
+    color: "#94A3B8",
+    fontSize: 14,
+  },
+  signOutBtn: {
+    backgroundColor: "#FEF2F2",
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: "center",
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#FECACA",
   },
-  box: {
-    backgroundColor: "beige",
-    padding: 20,
-    marginTop: 15,
-    borderRadius: 50,
-  },
-  security: {
-    paddingLeft: 20,
-  },
-  signoutbtn: {
-    color: "white",
-    textAlign: "center",
-    fontSize: 15,
-    padding: 10,
-    backgroundColor: "black",
-    width: 90,
-    borderRadius: 38,
-  },
-  contactbtn: {
-    color: "white",
-    textAlign: "center",
-    fontSize: 15,
-    fontWeight: "bold",
-    marginLeft: 20,
-    padding: 10,
-    paddingLeft: 20,
-    paddingRight: 20,
-    backgroundColor: "black",
-    width: 120,
-    borderRadius: 38,
-  },
-  editprofbtn: {
-    fontWeight: "bold",
-    color: "#221410",
-  },
-  infobox: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "center",
-    flexWrap: "wrap",
-    padding: 20,
-    gap: 10,
-  },
-  info: {
-    width: "45%",
-  },
-  infohead: {
-    width: "45%",
+  signOutBtnText: {
+    color: "#991B1B",
+    fontSize: 16,
+    fontWeight: "700",
   },
 });

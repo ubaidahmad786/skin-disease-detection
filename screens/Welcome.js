@@ -5,93 +5,163 @@ import {
   Image,
   Text,
   View,
-  useWindowDimensions,
+  SafeAreaView,
+  Dimensions,
 } from "react-native";
 
+const { width, height } = Dimensions.get("window");
+
 export default function Welcome({ navigation }) {
-  const { height, width } = useWindowDimensions();
-
   return (
-    <View style={styles.container}>
-      <Image source={require("../static/w2.png")} style={styles.gola} />
-      <Image source={require("../static/w1.png")} style={styles.bulb} />
-      <View style={[styles.bottom, { width: width * 0.9 }]}>
-        <Text style={styles.heroText}>Diagnose your skin </Text>
-        <Text style={styles.heroText}>in seconds.</Text>
-        <View style={styles.separator} />
-
-        <Pressable
-          android_ripple={{ color: "#eee", radius: 60 }}
-          style={styles.btn}
-          onPress={() => navigation.navigate("Login")}
-        >
-          <Text style={styles.btnText}>GET STARTED</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <View style={styles.imageContainer}>
           <Image
-            source={require("../assets/static/btn_arrow.png")}
-            style={{ height: 38, width: 38, alignSelf: "center" }}
+            source={require("../assets/hero.png")}
+            style={styles.heroImage}
+            resizeMode="contain"
           />
-        </Pressable>
+        </View>
+
+        <View style={styles.textSection}>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>AI-Powered Diagnosis</Text>
+          </View>
+
+          <Text style={styles.title}>
+            Derm<Text style={styles.subtitle}>Vision</Text>
+          </Text>
+
+          <Text style={styles.description}>
+            AI-powered skin cancer detection for everyone, everywhere.
+            Get instant analysis with clinical-grade accuracy.
+          </Text>
+
+          <View style={styles.buttonContainer}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.getStartedBtn,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={() => navigation.navigate("Login")}
+            >
+              <Text style={styles.btnText}>Get Started</Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.secondaryBtn}
+              onPress={() => navigation.navigate("SignUp")}
+            >
+              <Text style={styles.secondaryBtnText}>Create Account</Text>
+            </Pressable>
+          </View>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    position: "relative",
-    backgroundColor: "beige",
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+  },
+  content: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    paddingHorizontal: 24,
   },
-  gola: {
-    top: 180,
-    height: 150,
-    width: "40%",
-    alignSelf: "flex-end",
+  imageContainer: {
+    width: width * 0.9,
+    height: height * 0.4,
+    borderRadius: 30,
+    overflow: "hidden",
+    marginBottom: 40,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 8,
   },
-  bulb: {
-    left: 5,
-    bottom: 5,
-    height: 350,
-    width: 250,
-    marginBottom: 0,
-    alignSelf: "flex-start",
-    shadowColor: "black",
-    shadowOpacity: 1,
-  },
-  bottom: {
-    justifyContent: "flex-start",
-    alignItems: "flex-start",
-    width: "100",
-  },
-  heroText: {
-    fontSize: 38,
-    marginHorizontal: 10,
-    alignSelf: "flex-start",
-  },
-  separator: {
-    marginVertical: 10,
-    height: 3,
+  heroImage: {
     width: "100%",
-    backgroundColor: "black",
-    borderRadius: 10,
-    opacity: 1,
-    alignSelf: "center",
+    height: "100%",
   },
-  btn: {
-    marginTop: 10,
-    marginBottom: 45,
-    padding: 5,
-    gap: 3,
-    borderRadius: 50,
-    backgroundColor: "white",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    verticalAlign: "middle",
+  textSection: {
+    width: "100%",
+    alignItems: "center",
+  },
+  badge: {
+    backgroundColor: "#E0F2FE",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 16,
+  },
+  badgeText: {
+    color: "#0369A1",
+    fontSize: 14,
+    fontWeight: "600",
+    letterSpacing: 0.5,
+  },
+  title: {
+    fontSize: 48,
+    fontWeight: "800",
+    color: "#1E293B",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  subtitle: {
+    color: "#0EA5E9",
+  },
+  description: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: "#64748B",
+    textAlign: "center",
+    marginBottom: 40,
+    paddingHorizontal: 10,
+  },
+  buttonContainer: {
+    width: "100%",
+    gap: 16,
+  },
+  getStartedBtn: {
+    backgroundColor: "#0EA5E9",
+    width: "100%",
+    paddingVertical: 18,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#0EA5E9",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  buttonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
   btnText: {
-    color: "black",
-    fontSize: 30,
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  secondaryBtn: {
+    width: "100%",
+    paddingVertical: 18,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  secondaryBtnText: {
+    color: "#1E293B",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

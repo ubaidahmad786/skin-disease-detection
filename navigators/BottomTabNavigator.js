@@ -12,15 +12,18 @@ export default function App() {
     <Tab.Navigator
       screenOptions={{
         tabBarStyle: {
-          backgroundColor: "#00e9f1",
-          // borderTopStartRadius: 20,
-          // borderTopEndRadius: 20,
-          shadowOpacity: 0,
-          borderTopWidth: 0,
+          backgroundColor: "#FFFFFF",
+          borderTopWidth: 1,
+          borderTopColor: "#E2E8F0",
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
         },
-        tabBarItemStyle: {
-          margin: 5,
-          // borderRadius: 10,
+        tabBarActiveTintColor: "#0EA5E9",
+        tabBarInactiveTintColor: "#64748B",
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "600",
         },
         headerShown: false,
       }}
@@ -28,11 +31,11 @@ export default function App() {
       <Tab.Screen
         options={{
           tabBarLabel: "Home",
-
-          tabBarIcon: () => (
+          tabBarIcon: ({ color }) => (
             <Image
               source={require("../assets/static/home.png")}
-              style={{ height: 20, aspectRatio: 1 }}
+              style={{ height: 24, width: 24 }}
+              tintColor={color}
             />
           ),
         }}
@@ -42,10 +45,11 @@ export default function App() {
       <Tab.Screen
         options={{
           tabBarLabel: "History",
-          tabBarIcon: () => (
+          tabBarIcon: ({ color }) => (
             <Image
               source={require("../assets/static/history.png")}
-              style={{ height: 20, aspectRatio: 1 }}
+              style={{ height: 24, width: 24 }}
+              tintColor={color}
             />
           ),
         }}
@@ -55,10 +59,11 @@ export default function App() {
       <Tab.Screen
         options={{
           tabBarLabel: "Profile",
-          tabBarIcon: () => (
+          tabBarIcon: ({ color }) => (
             <Image
               source={require("../assets/static/profile.png")}
-              style={{ height: 20, aspectRatio: 1 }}
+              style={{ height: 24, width: 24 }}
+              tintColor={color}
             />
           ),
         }}

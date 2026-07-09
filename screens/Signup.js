@@ -6,11 +6,13 @@ import {
   TextInput,
   Pressable,
   View,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { firebase_auth, firebase_db } from "../firebaseConfig";
-import {
-  createUserWithEmailAndPassword,
-} from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { ref, set } from "firebase/database";
 
 const Signup = ({ navigation }) => {
@@ -21,6 +23,10 @@ const Signup = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
 
   const signUp = async () => {
+    if (!name || !email || !password || !mobile) {
+      alert("Please fill in all fields");
+      return;
+    }
     setLoading(true);
     try {
       const response = await createUserWithEmailAndPassword(
@@ -29,72 +35,111 @@ const Signup = ({ navigation }) => {
         password
       );
       const userId = response.user.uid;
-      await set(ref(firebase_db, 'users/' + userId), {
+      await set(ref(firebase_db, "users/" + userId), {
         name,
         email,
         mobile,
       });
-      console.log('User registered successfully:', response);
       navigation.navigate("Tabs");
     } catch (error) {
-      console.log('Error registering user:', error);
+      alert("Registration failed: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.topright}>
-        <Image
-          source={require("../static/l1.png")}
-          style={styles.img}
-        />
-      </View>
-      <View style={styles.wrapper}>
-        <View style={styles.greeting}>
-          <Text style={styles.greetingmsg}>Register to</Text>
-          <Text style={styles.greetingmsg}>DermVision</Text>
-        </View>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backButtonText}>← Back</Text>
+          </Pressable>
 
-        <View style={styles.loginForm}>
-          <Text style={styles.detailinfo}>Please enter details</Text>
-          <View style={styles.inputbox}>
-            <TextInput
-              placeholder="Name"
-              value={name}
-              onChangeText={(text) => setName(text)}
-              style={styles.input}
-            />
-            <TextInput
-              placeholder="Email"
-              value={email}
-              onChangeText={(text) => setEmail(text)}
-              style={styles.input}
-            />
-            <TextInput
-              placeholder="Password"
-              value={password}
-              onChangeText={(text) => setPassword(text)}
-              secureTextEntry={true}
-              style={styles.input}
-            />
-            <TextInput
-              placeholder="Mobile"
-              value={mobile}
-              onChangeText={(text) => setMobile(text)}
-              style={styles.input}
-            />
+          <View style={styles.header}>
+            <Text style={styles.greeting}>Create Account</Text>
+            <Text style={styles.subtitle}>Join us and start your skin health journey</Text>
           </View>
 
-          <View style={styles.loginbtn}>
-            <Pressable onPress={signUp}>
-              <Text style={styles.loginbtnmsg}>Sign Up</Text>
+          <View style={styles.form}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Full Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your name"
+                placeholderTextColor="#94A3B8"
+                value={name}
+                onChangeText={(text) => setName(text)}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email Address</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                placeholderTextColor="#94A3B8"
+                value={email}
+                onChangeText={(text) => setEmail(text)}
+                autoCapitalize="none"
+                inputMode="email"
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Mobile Number</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your mobile number"
+                placeholderTextColor="#94A3B8"
+                value={mobile}
+                onChangeText={(text) => setMobile(text)}
+                inputMode="tel"
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Create a password"
+                placeholderTextColor="#94A3B8"
+                value={password}
+                onChangeText={(text) => setPassword(text)}
+                secureTextEntry={true}
+              />
+            </View>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.signUpBtn,
+                pressed && styles.buttonPressed,
+                loading && styles.disabledBtn,
+              ]}
+              onPress={signUp}
+              disabled={loading}
+            >
+              <Text style={styles.signUpBtnText}>
+                {loading ? "Creating Account..." : "Sign Up"}
+              </Text>
             </Pressable>
           </View>
-        </View>
-      </View>
-    </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Already have an account? </Text>
+            <Pressable onPress={() => navigation.navigate("Login")}>
+              <Text style={styles.loginLink}>Log In</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -102,64 +147,105 @@ export default Signup;
 
 const styles = StyleSheet.create({
   container: {
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "beige",
+    flex: 1,
+    backgroundColor: "#F8FAFC",
   },
-  topright: {
-    position: "absolute",
-    top: 50,
-    right: 0,
-    display: "flex",
-    flexDirection: "row",
-    fontWeight: "bold",
-    gap: 5,
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 40,
   },
-  img: {
-    height: 50,
-    width: 50,
-  },
-  wrapper: {
-    width: "80%",
+  header: {
+    marginBottom: 32,
   },
   greeting: {
-    marginBottom: 20,
+    fontSize: 32,
+    fontWeight: "800",
+    color: "#1E293B",
+    marginBottom: 8,
   },
-  greetingmsg: {
-    fontSize: 60,
-    color: "#333341",
-    margin: -8,
+  subtitle: {
+    fontSize: 16,
+    color: "#64748B",
   },
-  loginForm: {},
-  detailinfo: {
-    fontSize: 20,
-    color: "#333341",
-    fontWeight: "bold",
+  backButton: {
     marginBottom: 20,
+    paddingVertical: 8,
+    alignSelf: "flex-start",
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: "#0EA5E9",
+    fontWeight: "700",
+  },
+  form: {
+    flex: 1,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#475569",
+    marginBottom: 8,
+    marginLeft: 4,
   },
   input: {
-    borderWidth: 3,
-    borderColor: "green",
-    marginBottom: 20,
-    padding: 5,
-    fontSize: 15,
-    color: "#333341",
-    borderRadius: 10,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: "#1E293B",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  loginbtn: {
-    width: "100%",
-    backgroundColor: "#333341",
-    verticalAlign: "center",
-    marginBottom: 20,
+  signUpBtn: {
+    backgroundColor: "#0EA5E9",
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+    shadowColor: "#0EA5E9",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  loginbtnmsg: {
-    width: "100%",
-    color: "antiquewhite",
-    textAlign: "center",
-    fontSize: 15,
-    fontWeight: "bold",
-    margin: 10,
+  buttonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
+  disabledBtn: {
+    backgroundColor: "#94A3B8",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  signUpBtnText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 32,
+  },
+  footerText: {
+    fontSize: 14,
+    color: "#64748B",
+  },
+  loginLink: {
+    fontSize: 14,
+    color: "#0EA5E9",
+    fontWeight: "700",
   },
 });

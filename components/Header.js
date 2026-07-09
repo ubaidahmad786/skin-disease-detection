@@ -36,7 +36,7 @@ export default function Header() {
           <Text style={styles.usergreeting}>Hi, {userData.name}</Text>
         </View>
         <Image
-          source={require("../assets/static/20240221_000353_0007.png")}
+          source={require("../assets/static/profile.png")}
           style={styles.userimg}
         />
       </View>
